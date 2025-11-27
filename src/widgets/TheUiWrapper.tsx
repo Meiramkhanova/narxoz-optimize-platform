@@ -20,7 +20,7 @@ interface TheUiWrapperProps {
 }
 
 function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
-  const [selectedStudent, setSelectedStudent] = useState<string>("all");
+  const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [selectedQuestion, setSelectedQuestion] = useState<string>("");
 
   const [appliedStudent, setAppliedStudent] = useState<string>("all");
@@ -46,21 +46,23 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
   const handleApplyFilters = () => {
     setAppliedStudent(selectedStudent);
     setAppliedQuestion(selectedQuestion);
+    setExpandedId(null);
   };
 
   const handleResetFilters = () => {
-    setSelectedStudent("all");
+    setSelectedStudent("");
     setSelectedQuestion("");
-    setAppliedStudent("all");
+    setAppliedStudent("");
     setAppliedQuestion("");
+    setExpandedId(null);
   };
 
-  const filteredRequests = typedRows.filter((request) => {
-    if (appliedStudent === "all" || appliedQuestion === "") {
-      return true;
-    }
-    return request.ФИО === appliedStudent && request.Вопрос === appliedQuestion;
-  });
+  const filteredRequests = typedRows.filter(
+    (request) =>
+      request.ФИО === appliedStudent && request.Вопрос === appliedQuestion
+  );
+
+  const canToggle = filteredRequests.length === 1;
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,7 +88,6 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
                     <SelectValue placeholder="Выберите студента" />
                   </SelectTrigger>
                   <SelectContent position="popper" align="start">
-                    <SelectItem value="all">Все студенты</SelectItem>
                     {uniqueStudents.map((student) => (
                       <SelectItem key={student} value={student}>
                         {student}
@@ -141,20 +142,23 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-6 mt-8">
             {filteredRequests.map((request, index) => (
               <ResultCard
                 order={index + 1}
                 data={request}
                 key={index + 1}
                 isExpanded={expandedId === request["Номер Обращения"]}
-                onToggle={() =>
-                  setExpandedId(
-                    expandedId === request["Номер Обращения"]
-                      ? null
-                      : request["Номер Обращения"]
-                  )
-                }
+                onToggle={() => {
+                  if (appliedStudent !== "all" && appliedQuestion !== "") {
+                    setExpandedId(
+                      expandedId === request["Номер Обращения"]
+                        ? null
+                        : request["Номер Обращения"]
+                    );
+                  }
+                }}
+                canToggle={canToggle}
               />
             ))}
           </div>
