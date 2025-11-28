@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Resolver, useForm, type SubmitHandler } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface ResultCardProps {
   data: RequestRow;
@@ -18,18 +21,79 @@ interface ResultCardProps {
   canToggle: boolean;
 }
 
-const statusColors = {
-  NEW: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
-};
+const requiredPositiveNumberField = z
+  .preprocess((val) => {
+    if (typeof val === "string") val = val.trim();
+    if (val === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? undefined : num;
+  }, z.union([z.number(), z.undefined()]))
+  .superRefine((val, ctx) => {
+    if (val === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Введите число",
+      });
+      return;
+    }
+    if (!Number.isInteger(val)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Должно быть целым числом",
+      });
+    }
+    if (val <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Должно быть положительным числом",
+      });
+    }
+  });
+
+const schema = z.object({
+  protocol_number: requiredPositiveNumberField,
+  question_number: requiredPositiveNumberField,
+  actual_member_number: requiredPositiveNumberField,
+  expected_member_number: requiredPositiveNumberField,
+  votes_for: requiredPositiveNumberField,
+  votes_against: requiredPositiveNumberField,
+  votes_abstained: requiredPositiveNumberField,
+  agenda_question: z.string().min(3, "Поле не может быть пустым"),
+  meeting_progress: z.string().min(3, "Поле не может быть пустым"),
+  meeting_solution: z.string().min(3, "Поле не может быть пустым"),
+});
+
+type formFields = z.infer<typeof schema>;
 
 function ResultCard({
   data,
-  order,
   isExpanded,
   onToggle,
   canToggle,
 }: ResultCardProps) {
   const { phone, email } = parseContacts(data.Контакты);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<formFields>({
+    resolver: zodResolver(schema) as Resolver<formFields>,
+  });
+
+  const onSubmit: SubmitHandler<formFields> = async (formData) => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.log(formData);
+
+      throw new Error();
+    } catch (err) {
+      errors.root && (
+        <p className="text-sm text-red-500">{errors.root.message}</p>
+      );
+    }
+  };
 
   return (
     <>
@@ -44,10 +108,6 @@ function ResultCard({
         onClick={onToggle}>
         <CardHeader>
           <div className="mb-3 flex items-center justify-between gap-3">
-            {/* <Badge variant="outline" className="text-xs font-medium rounded-md">
-              {`REQ-${String(order).padStart(3, "0")}`}
-            </Badge> */}
-
             {data["Номер Обращения"] && (
               <div className="card-request-number flex items-center justify-between gap-2 text-xs text-gray-500">
                 <p className="request-id">ID:</p>
@@ -59,14 +119,6 @@ function ResultCard({
             )}
 
             <div className="status-toggled-icon flex items-center gap-2">
-              {/* <Badge
-                className={cn(
-                  "text-xs font-medium",
-                  statusColors[data.Статус]
-                )}>
-                {data.Статус}
-              </Badge> */}
-
               <ChevronRight
                 className={cn(
                   "h-5 w-5 text-muted-foreground transition-transform duration-300",
@@ -99,7 +151,7 @@ function ResultCard({
           {data.Вопрос && (
             <div className="card-question space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">
-                Question
+                Вопрос
               </p>
 
               <div className="overflow-hidden transition-all duration-300 ease-in-out">
@@ -132,7 +184,7 @@ function ResultCard({
 
       <div
         className={cn(
-          "overflow-hidden transition-all duration-500 ease-out xl:col-span-4",
+          "overflow-hidden transition-all duration-500 ease-out xl:col-span-4 rounded-xl",
           isExpanded && canToggle
             ? "max-h-[2000px] flex-1 opacity-100 xl:max-h-none"
             : "max-h-0 flex-1 opacity-0 xl:w-0"
@@ -148,7 +200,7 @@ function ResultCard({
               </div>
             </div>
 
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label
@@ -160,18 +212,18 @@ function ResultCard({
 
                   <Input
                     id={`protocol-${data["Номер Обращения"]}`}
-                    type="number"
+                    type="text"
                     placeholder="2"
+                    value={watch("protocol_number") ?? ""}
                     className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
-                    // value={formData.protocol_number}
-                    // onChange={(e) =>
-                    //   setFormData({
-                    //     ...formData,
-                    //     protocol_number: e.target.value,
-                    //   })
-                    // }
-                    required
+                    {...register("protocol_number")}
                   />
+
+                  {errors.protocol_number && (
+                    <p className="text-sm text-red-500">
+                      {errors.protocol_number.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -186,15 +238,14 @@ function ResultCard({
                     type="number"
                     placeholder="10"
                     className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
-                    // value={formData.question_number}
-                    // onChange={(e) =>
-                    //   setFormData({
-                    //     ...formData,
-                    //     question_number: e.target.value,
-                    //   })
-                    // }
-                    required
+                    {...register("question_number", { valueAsNumber: true })}
                   />
+
+                  {errors.question_number && (
+                    <p className="text-sm text-red-500">
+                      {errors.question_number.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -208,14 +259,14 @@ function ResultCard({
                   id={`agenda-${data["Номер Обращения"]}`}
                   placeholder="Выбор председателя комиссии по обеспечению качества ШЦТ..."
                   className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
-                  // value={formData.agenda_question}
-                  // onChange={(e) =>
-                  //   setFormData({
-                  //     ...formData,
-                  //     agenda_question: e.target.value,
-                  //   })
-                  // }
+                  {...register("agenda_question")}
                 />
+
+                {errors.agenda_question && (
+                  <p className="text-sm text-red-500">
+                    {errors.agenda_question.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -230,15 +281,14 @@ function ResultCard({
                   placeholder="Директор школы ознакомил членов комиссии с повесткой дня..."
                   rows={4}
                   className="resize-none border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
-                  // value={formData.meeting_progress}
-                  // onChange={(e) =>
-                  //   setFormData({
-                  //     ...formData,
-                  //     meeting_progress: e.target.value,
-                  //   })
-                  // }
-                  required
+                  {...register("meeting_progress")}
                 />
+
+                {errors.meeting_progress && (
+                  <p className="text-sm text-red-500">
+                    {errors.meeting_progress.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -253,15 +303,14 @@ function ResultCard({
                   placeholder="Назначить председателя КОК ШЦТ – Сапажанова Е.С., технического секретаря – Ахметжан Д.М."
                   rows={3}
                   className="resize-none border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
-                  // value={formData.meeting_solution}
-                  // onChange={(e) =>
-                  //   setFormData({
-                  //     ...formData,
-                  //     meeting_solution: e.target.value,
-                  //   })
-                  // }
-                  required
+                  {...register("meeting_solution")}
                 />
+
+                {errors.meeting_solution && (
+                  <p className="text-sm text-red-500">
+                    {errors.meeting_solution.message}
+                  </p>
+                )}
               </div>
 
               <div className="member-numbers mb-6 grid gap-4 md:grid-cols-2">
@@ -274,13 +323,17 @@ function ResultCard({
                     id="actualMemberNumber"
                     type="number"
                     placeholder="8"
-                    // value={formData.actualMemberNumber}
-                    // onChange={(e) =>
-                    //   handleChange("actualMemberNumber", e.target.value)
-                    // }
-                    required
+                    {...register("actual_member_number", {
+                      valueAsNumber: true,
+                    })}
                     className="bg-[#f8f8f8]"
                   />
+
+                  {errors.actual_member_number && (
+                    <p className="text-sm text-red-500">
+                      {errors.actual_member_number.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expectedMemberNumber">
@@ -291,13 +344,17 @@ function ResultCard({
                     id="expectedMemberNumber"
                     type="number"
                     placeholder="12"
-                    // value={formData.expectedMemberNumber}
-                    // onChange={(e) =>
-                    //   handleChange("expectedMemberNumber", e.target.value)
-                    // }
-                    required
+                    {...register("expected_member_number", {
+                      valueAsNumber: true,
+                    })}
                     className="bg-[#f8f8f8]"
                   />
+
+                  {errors.expected_member_number && (
+                    <p className="text-sm text-red-500">
+                      {errors.expected_member_number.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -320,12 +377,14 @@ function ResultCard({
                       min="0"
                       placeholder="8"
                       className="border-muted-foreground/20 bg-background transition-all focus:ring-2 focus:ring-primary/20"
-                      // value={formData.votes_for}
-                      // onChange={(e) =>
-                      //   setFormData({ ...formData, votes_for: e.target.value })
-                      // }
-                      required
+                      {...register("votes_for", { valueAsNumber: true })}
                     />
+
+                    {errors.votes_for && (
+                      <p className="text-sm text-red-500">
+                        {errors.votes_for.message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -341,15 +400,14 @@ function ResultCard({
                       min="0"
                       placeholder="0"
                       className="border-muted-foreground/20 bg-background transition-all focus:ring-2 focus:ring-primary/20"
-                      // value={formData.votes_against}
-                      // onChange={(e) =>
-                      //   setFormData({
-                      //     ...formData,
-                      //     votes_against: e.target.value,
-                      //   })
-                      // }
-                      required
+                      {...register("votes_against", { valueAsNumber: true })}
                     />
+
+                    {errors.votes_against && (
+                      <p className="text-sm text-red-500">
+                        {errors.votes_against.message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -365,15 +423,14 @@ function ResultCard({
                       min="0"
                       placeholder="1"
                       className="border-muted-foreground/20 bg-background transition-all focus:ring-2 focus:ring-primary/20"
-                      // value={formData.votes_abstained}
-                      // onChange={(e) =>
-                      //   setFormData({
-                      //     ...formData,
-                      //     votes_abstained: e.target.value,
-                      //   })
-                      // }
-                      required
+                      {...register("votes_abstained", { valueAsNumber: true })}
                     />
+
+                    {errors.votes_abstained && (
+                      <p className="text-sm text-red-500">
+                        {errors.votes_abstained.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
