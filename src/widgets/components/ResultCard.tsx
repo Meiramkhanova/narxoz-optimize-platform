@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Resolver, useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { submitProtocol } from "@/services/api";
 
 interface ResultCardProps {
   data: RequestRow;
@@ -63,7 +64,7 @@ const schema = z.object({
   meeting_solution: z.string().min(3, "Поле не может быть пустым"),
 });
 
-type formFields = z.infer<typeof schema>;
+export type formFields = z.infer<typeof schema>;
 
 function ResultCard({
   data,
@@ -84,11 +85,12 @@ function ResultCard({
 
   const onSubmit: SubmitHandler<formFields> = async (formData) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log(formData);
-
+      await submitProtocol(formData);
+      console.log("Данные успешно отправлены", formData);
+      // reset();
       throw new Error();
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Ошибка при отправке формы:", err.message);
       errors.root && (
         <p className="text-sm text-red-500">{errors.root.message}</p>
       );
@@ -438,8 +440,9 @@ function ResultCard({
               <div className="btns-wrapper flex gap-3 border-t pt-4">
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="flex-1 shadow-sm hover:shadow-md">
-                  Сохранить
+                  {isSubmitting ? "Отправка..." : "Сохранить"}
                 </Button>
 
                 <Button
