@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Resolver, useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { submitProtocol } from "@/services/api";
 
 interface ResultCardProps {
   data: RequestRow;
@@ -78,6 +77,7 @@ function ResultCard({
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<formFields>({
     resolver: zodResolver(schema) as Resolver<formFields>,
@@ -85,15 +85,31 @@ function ResultCard({
 
   const onSubmit: SubmitHandler<formFields> = async (formData) => {
     try {
-      await submitProtocol(formData);
-      console.log("Данные успешно отправлены", formData);
-      // reset();
-      throw new Error();
+      // вызываем локальный серверный route
+      const res = await fetch("/api/send-protocol", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const resData = await res.json();
+
+      if (!res.ok) {
+        const errData = await res.json();
+        // ставим глобальную ошибку формы
+        setError("root", {
+          type: "manual",
+          message: errData.error || "Ошибка отправки",
+        });
+        return;
+      }
+      console.log("Ответ сервера:", resData);
+      // reset(); // если хочешь очистить форму
     } catch (err: any) {
-      console.error("Ошибка при отправке формы:", err.message);
-      errors.root && (
-        <p className="text-sm text-red-500">{errors.root.message}</p>
-      );
+      setError("root", {
+        type: "manual",
+        message: err.message || "Не удалось отправить",
+      });
     }
   };
 
