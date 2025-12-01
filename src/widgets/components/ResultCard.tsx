@@ -2,7 +2,15 @@ import { RequestRow } from "@/app/page";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "../../shared/utils/cn";
-import { Calendar, ChevronRight, Mail, Phone } from "lucide-react";
+import {
+  Calendar,
+  ChevronRight,
+  FileText,
+  Mail,
+  Phone,
+  Send,
+  Loader2,
+} from "lucide-react";
 import parseContacts from "@/shared/utils/parseContacts";
 import formatDate from "../../shared/utils/formatDate";
 import { Label } from "@/components/ui/label";
@@ -95,16 +103,24 @@ function ResultCard({
       const resData = await res.json();
 
       if (!res.ok) {
-        const errData = await res.json();
-        // ставим глобальную ошибку формы
         setError("root", {
           type: "manual",
-          message: errData.error || "Ошибка отправки",
+          message: resData.error || "Ошибка отправки",
         });
         return;
       }
+
       console.log("Ответ сервера:", resData);
-      // reset(); // если хочешь очистить форму
+
+      if (resData?.documentId) {
+        const url = `https://docs.google.com/document/d/${resData.documentId}/edit`;
+        window.open(url, "_blank");
+      } else {
+        setError("root", {
+          type: "manual",
+          message: "Сервер не вернул ID Google Docs",
+        });
+      }
     } catch (err: any) {
       setError("root", {
         type: "manual",
@@ -230,7 +246,7 @@ function ResultCard({
 
                   <Input
                     id={`protocol-${data["Номер Обращения"]}`}
-                    type="text"
+                    type="number"
                     placeholder="2"
                     value={watch("protocol_number") ?? ""}
                     className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
@@ -456,17 +472,27 @@ function ResultCard({
               <div className="btns-wrapper flex gap-3 border-t pt-4">
                 <Button
                   type="submit"
+                  variant="outline"
                   disabled={isSubmitting}
-                  className="flex-1 shadow-sm hover:shadow-md">
-                  {isSubmitting ? "Отправка..." : "Сохранить"}
+                  className="flex-1">
+                  {isSubmitting ? (
+                    <div className="icon-preview-btn-loading flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" />
+                      <span>Предпросмотр в Google Docs</span>
+                    </div>
+                  ) : (
+                    <div className="icon-preview-btn flex items-center gap-2">
+                      <FileText className="size-4" />
+                      <span>Предпросмотр в Google Docs</span>
+                    </div>
+                  )}
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onToggle}
-                  className="flex-1 hover:bg-muted bg-transparent">
-                  Отменить
+                <Button type="button" onClick={onToggle} className="flex-1">
+                  <div className="icon-send-to-email flex items-center gap-2">
+                    <Send className="size-4" />
+                    <span> Отправить на почту</span>
+                  </div>
                 </Button>
               </div>
             </form>
