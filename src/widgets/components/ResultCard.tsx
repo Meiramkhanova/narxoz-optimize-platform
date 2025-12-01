@@ -85,6 +85,7 @@ function ResultCard({
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<formFields>({
     resolver: zodResolver(schema) as Resolver<formFields>,
@@ -109,11 +110,11 @@ function ResultCard({
         return;
       }
 
-      console.log("Ответ сервера:", resData);
-
       if (resData?.documentId) {
         const url = `https://docs.google.com/document/d/${resData.documentId}/edit`;
         window.open(url, "_blank");
+
+        reset();
       } else {
         setError("root", {
           type: "manual",
