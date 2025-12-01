@@ -84,7 +84,6 @@ function ResultCard({
   const {
     register,
     handleSubmit,
-    watch,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<formFields>({
@@ -131,15 +130,7 @@ function ResultCard({
 
   return (
     <>
-      <Card
-        className={cn(
-          "result-card xl:col-span-3",
-          isExpanded
-            ? "ring-2 ring-primary/50 shadow-xl"
-            : "hover:shadow-md hover:ring-1 hover:ring-primary/20",
-          !canToggle ? "invisible" : ""
-        )}
-        onClick={onToggle}>
+      <Card className="result-card xl:col-span-3">
         <CardHeader>
           <div className="mb-3 flex items-center justify-between gap-3">
             {data["Номер Обращения"] && (
@@ -152,14 +143,21 @@ function ResultCard({
               </div>
             )}
 
-            <div className="status-toggled-icon flex items-center gap-2">
+            <button
+              type="button"
+              aria-expanded={isExpanded && canToggle}
+              onClick={onToggle}
+              className={cn(
+                "status-toggled-icon flex justify-center items-center gap-2",
+                "hover:bg-gray-100 p-1.5 rounded-full transition-all duration-300 cursor-pointer"
+              )}>
               <ChevronRight
                 className={cn(
                   "h-5 w-5 text-muted-foreground transition-transform duration-300",
                   isExpanded ? "rotate-90" : ""
                 )}
               />
-            </div>
+            </button>
           </div>
 
           <CardTitle className="fullname text-balance text-xl leading-tight">
@@ -235,20 +233,29 @@ function ResultCard({
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-              <div className="grid gap-4 sm:grid-cols-2">
+              {errors.root && (
+                <p className="text-sm text-red-500">{errors.root.message}</p>
+              )}
+
+              <div className="number-protocol-question grid grid-cols-1 lg:grid-cols-2 gap-4 ">
                 <div className="space-y-2">
                   <Label
-                    htmlFor={`protocol-${data["Номер Обращения"]}`}
+                    htmlFor={`protocol-${data["Номер Обращения"]?.replace(
+                      /\s+/g,
+                      "-"
+                    )}`}
                     className="flex items-center gap-1 text-sm font-medium">
                     Номер протокола
                     <span className="text-destructive">*</span>
                   </Label>
 
                   <Input
-                    id={`protocol-${data["Номер Обращения"]}`}
+                    id={`protocol-${data["Номер Обращения"]?.replace(
+                      /\s+/g,
+                      "-"
+                    )}`}
                     type="number"
                     placeholder="2"
-                    value={watch("protocol_number") ?? ""}
                     className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
                     {...register("protocol_number")}
                   />
@@ -268,7 +275,10 @@ function ResultCard({
                     <span className="text-destructive">*</span>
                   </Label>
                   <Input
-                    id={`question-${data["Номер Обращения"]}`}
+                    id={`question-${data["Номер Обращения"]?.replace(
+                      /\s+/g,
+                      "-"
+                    )}`}
                     type="number"
                     placeholder="10"
                     className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
@@ -290,7 +300,7 @@ function ResultCard({
                   Вопрос повестки дня
                 </Label>
                 <Input
-                  id={`agenda-${data["Номер Обращения"]}`}
+                  id={`agenda-${data["Номер Обращения"]?.replace(/\s+/g, "-")}`}
                   placeholder="Выбор председателя комиссии по обеспечению качества ШЦТ..."
                   className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
                   {...register("agenda_question")}
@@ -305,12 +315,16 @@ function ResultCard({
 
               <div className="space-y-2">
                 <Label
-                  htmlFor={`progress-${data["Номер Обращения"]}`}
+                  htmlFor={`progress-${data["Номер Обращения"]?.replace(
+                    /\s+/g,
+                    "-"
+                  )}`}
                   className="flex items-center gap-1 text-sm font-medium">
                   Ход заседания
                   <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
+                  maxLength={1000}
                   id={`progress-${data["Номер Обращения"]}`}
                   placeholder="Директор школы ознакомил членов комиссии с повесткой дня..."
                   rows={4}
@@ -327,13 +341,20 @@ function ResultCard({
 
               <div className="space-y-2">
                 <Label
-                  htmlFor={`solution-${data["Номер Обращения"]}`}
+                  htmlFor={`solution-${data["Номер Обращения"]?.replace(
+                    /\s+/g,
+                    "-"
+                  )}`}
                   className="flex items-center gap-1 text-sm font-medium">
                   Решение заседания
                   <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
-                  id={`solution-${data["Номер Обращения"]}`}
+                  id={`solution-${data["Номер Обращения"]?.replace(
+                    /\s+/g,
+                    "-"
+                  )}`}
+                  maxLength={1000}
                   placeholder="Назначить председателя КОК ШЦТ – Сапажанова Е.С., технического секретаря – Ахметжан Д.М."
                   rows={3}
                   className="resize-none border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
@@ -347,7 +368,7 @@ function ResultCard({
                 )}
               </div>
 
-              <div className="member-numbers mb-6 grid gap-4 md:grid-cols-2">
+              <div className="member-numbers mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="actualMemberNumber">
                     Фактическое количество членов{" "}
@@ -397,16 +418,22 @@ function ResultCard({
                   Результаты голосования
                 </Label>
 
-                <div className="votes grid gap-3 sm:grid-cols-3">
+                <div className="votes grid grid-cols-1 lg:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label
-                      htmlFor={`votes-for-${data["Номер Обращения"]}`}
+                      htmlFor={`votes-for-${data["Номер Обращения"]?.replace(
+                        /\s+/g,
+                        "-"
+                      )}`}
                       className="flex items-center gap-1 text-xs text-muted-foreground">
                       Голосов "За"
                       <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id={`votes-for-${data["Номер Обращения"]}`}
+                      id={`votes-for-${data["Номер Обращения"]?.replace(
+                        /\s+/g,
+                        "-"
+                      )}`}
                       type="number"
                       min="0"
                       placeholder="8"
@@ -423,13 +450,18 @@ function ResultCard({
 
                   <div className="space-y-2">
                     <Label
-                      htmlFor={`votes-against-${data["Номер Обращения"]}`}
+                      htmlFor={`votes-against-${data[
+                        "Номер Обращения"
+                      ]?.replace(/\s+/g, "-")}`}
                       className="flex items-center gap-1 text-xs text-muted-foreground">
                       Голосов "Против"
                       <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id={`votes-against-${data["Номер Обращения"]}`}
+                      id={`votes-against-${data["Номер Обращения"]?.replace(
+                        /\s+/g,
+                        "-"
+                      )}`}
                       type="number"
                       min="0"
                       placeholder="0"
@@ -446,13 +478,18 @@ function ResultCard({
 
                   <div className="space-y-2">
                     <Label
-                      htmlFor={`votes-abstained-${data["Номер Обращения"]}`}
+                      htmlFor={`votes-abstained-${data[
+                        "Номер Обращения"
+                      ]?.replace(/\s+/g, "-")}`}
                       className="flex items-center gap-1 text-xs text-muted-foreground">
                       Воздержались
                       <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id={`votes-abstained-${data["Номер Обращения"]}`}
+                      id={`votes-abstained-${data["Номер Обращения"]?.replace(
+                        /\s+/g,
+                        "-"
+                      )}`}
                       type="number"
                       min="0"
                       placeholder="1"
@@ -469,7 +506,7 @@ function ResultCard({
                 </div>
               </div>
 
-              <div className="btns-wrapper flex gap-3 border-t pt-4">
+              <div className="btns-wrapper grid grid-cols-1 xl:grid-cols-2 gap-3 border-t pt-4">
                 <Button
                   type="submit"
                   variant="outline"

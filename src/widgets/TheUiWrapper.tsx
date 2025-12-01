@@ -65,7 +65,7 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
   const canToggle = filteredRequests.length === 1;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="xl:min-h-screen bg-background">
       <Header />
 
       <main className="py-6">
@@ -75,7 +75,7 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
               Фильтр запросов студентов
             </h2>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Имя студента</label>
                 <Select
@@ -108,10 +108,7 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
                   </SelectTrigger>
                   <SelectContent position="popper" align="start">
                     {uniqueQuestions.map((question) => (
-                      <SelectItem
-                        key={question}
-                        value={question}
-                        className="whitespace-normal wrap-break-word">
+                      <SelectItem key={question} value={question}>
                         {question}
                       </SelectItem>
                     ))}
@@ -125,7 +122,7 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-6">
               <Button
                 onClick={handleApplyFilters}
                 className="flex-1 md:flex-none"
