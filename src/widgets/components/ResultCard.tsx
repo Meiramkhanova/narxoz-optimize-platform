@@ -164,9 +164,14 @@ function ResultCard({
           "Ошибка отправки на почту:",
           resData.error || res.statusText
         );
+
         setEmailStatus(false);
       } else {
         setEmailStatus("sent");
+        reset();
+        setDocumentId(null);
+
+        setTimeout(() => setEmailStatus(false), 1000);
       }
     } catch (err: any) {
       console.error("Ошибка отправки на почту:", err.message);
