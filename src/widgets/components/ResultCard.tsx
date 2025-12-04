@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Resolver, useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
 interface ResultCardProps {
   data: RequestRow;
@@ -81,6 +82,11 @@ function ResultCard({
 }: ResultCardProps) {
   const { phone, email } = parseContacts(data.Контакты);
 
+  const [documentId, setDocumentId] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<false | "sending" | "sent">(
+    false
+  );
+
   const {
     register,
     handleSubmit,
@@ -111,10 +117,9 @@ function ResultCard({
       }
 
       if (resData?.documentId) {
+        setDocumentId(resData.documentId);
         const url = `https://docs.google.com/document/d/${resData.documentId}/edit`;
         window.open(url, "_blank");
-
-        reset();
       } else {
         setError("root", {
           type: "manual",
@@ -126,6 +131,46 @@ function ResultCard({
         type: "manual",
         message: err.message || "Не удалось отправить",
       });
+    }
+  };
+
+  const payload = {
+    student_name: data.ФИО,
+    student_email: email || "",
+    student_question: data.Вопрос || "",
+    document_id: documentId,
+  };
+
+  const handleSendEmail = async () => {
+    if (!documentId) return;
+
+    setEmailStatus("sending");
+
+    try {
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_name: data.ФИО,
+          student_email: email || "",
+          student_question: data.Вопрос || "",
+          document_id: documentId,
+        }),
+      });
+
+      if (!res.ok) {
+        const resData = await res.json();
+        console.error(
+          "Ошибка отправки на почту:",
+          resData.error || res.statusText
+        );
+        setEmailStatus(false);
+      } else {
+        setEmailStatus("sent");
+      }
+    } catch (err: any) {
+      console.error("Ошибка отправки на почту:", err.message);
+      setEmailStatus(false);
     }
   };
 
@@ -526,11 +571,31 @@ function ResultCard({
                   )}
                 </Button>
 
-                <Button type="button" onClick={onToggle} className="flex-1">
-                  <div className="icon-send-to-email flex items-center gap-2">
-                    <Send className="size-4" />
-                    <span> Отправить на почту</span>
-                  </div>
+                <Button
+                  type="button"
+                  onClick={handleSendEmail}
+                  disabled={
+                    !documentId ||
+                    emailStatus === "sending" ||
+                    emailStatus === "sent"
+                  }
+                  className="flex-1 flex items-center justify-center gap-2">
+                  {emailStatus === "sending" ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin text-gray-400" />
+                      <span>Отправка...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="size-4" />
+
+                      <span>
+                        {emailStatus === "sent"
+                          ? "Отправлено"
+                          : "Отправить на почту"}
+                      </span>
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

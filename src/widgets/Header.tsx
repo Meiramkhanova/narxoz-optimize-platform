@@ -14,7 +14,7 @@ function Header() {
             className="w-40 object-cover"
           />
 
-          <div className="header-info-field hidden md:block">
+          <div className="header-info-field hidden md:block text-end">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
               Управление запросами студентов
             </h1>
