@@ -134,13 +134,6 @@ function ResultCard({
     }
   };
 
-  const payload = {
-    student_name: data.ФИО,
-    student_email: email || "",
-    student_question: data.Вопрос || "",
-    document_id: documentId,
-  };
-
   const handleSendEmail = async () => {
     if (!documentId) return;
 
