@@ -12,6 +12,7 @@ function Header() {
             width={200}
             height={300}
             className="w-40 object-cover"
+            loading="eager"
           />
 
           <div className="header-info-field hidden md:block text-end">
