@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Resolver, useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ResultCardProps {
   data: RequestRow;
@@ -87,6 +87,9 @@ function ResultCard({
     false
   );
 
+  console.log("dAtaaaaa", data);
+  console.log("dAtaaaaaQuestion", data.Вопрос);
+
   const {
     register,
     handleSubmit,
@@ -95,9 +98,20 @@ function ResultCard({
     formState: { errors, isSubmitting },
   } = useForm<formFields>({
     resolver: zodResolver(schema) as Resolver<formFields>,
+    defaultValues: {
+      agenda_question: data?.Вопрос || "",
+    },
   });
 
+  useEffect(() => {
+    reset((prev) => ({
+      ...prev,
+      agenda_question: data?.Вопрос || "",
+    }));
+  }, [data, reset]);
+
   const onSubmit: SubmitHandler<formFields> = async (formData) => {
+    console.log("formdata", formData);
     try {
       // вызываем локальный серверный route
       const res = await fetch("/api/send-protocol", {
@@ -108,6 +122,8 @@ function ResultCard({
 
       const resData = await res.json();
 
+      console.log("resData", resData);
+
       if (!res.ok) {
         setError("root", {
           type: "manual",
@@ -115,6 +131,8 @@ function ResultCard({
         });
         return;
       }
+
+      console.log("documentId", resData.documentId);
 
       if (resData?.documentId) {
         setDocumentId(resData.documentId);
