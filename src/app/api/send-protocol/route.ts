@@ -12,7 +12,6 @@ export async function POST(req: Request) {
         httpsAgent: new https.Agent({ rejectUnauthorized: false }),
       }
     );
-
     return new Response(JSON.stringify(res.data), { status: 200 });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {

@@ -67,9 +67,18 @@ const schema = z.object({
   votes_for: requiredPositiveNumberField,
   votes_against: requiredPositiveNumberField,
   votes_abstained: requiredPositiveNumberField,
-  agenda_question: z.string().min(3, "Поле не может быть пустым"),
-  meeting_progress: z.string().min(3, "Поле не может быть пустым"),
-  meeting_solution: z.string().min(3, "Поле не может быть пустым"),
+  agenda_question: z
+    .string()
+    .nonempty("Поле не может быть пустым")
+    .min(3, "Поле должно содержать минимум 5 символа"),
+  meeting_progress: z
+    .string()
+    .nonempty("Поле не может быть пустым")
+    .min(5, "Поле должно содержать минимум 5 символа"),
+  meeting_solution: z
+    .string()
+    .nonempty("Поле не может быть пустым")
+    .min(5, "Поле должно содержать минимум 5 символа"),
 });
 
 export type formFields = z.infer<typeof schema>;
@@ -86,9 +95,6 @@ function ResultCard({
   const [emailStatus, setEmailStatus] = useState<false | "sending" | "sent">(
     false
   );
-
-  console.log("dAtaaaaa", data);
-  console.log("dAtaaaaaQuestion", data.Вопрос);
 
   const {
     register,
@@ -111,18 +117,20 @@ function ResultCard({
   }, [data, reset]);
 
   const onSubmit: SubmitHandler<formFields> = async (formData) => {
-    console.log("formdata", formData);
     try {
+      const payload = {
+        ...formData,
+        student_name: data?.ФИО,
+      };
+
       // вызываем локальный серверный route
       const res = await fetch("/api/send-protocol", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const resData = await res.json();
-
-      console.log("resData", resData);
 
       if (!res.ok) {
         setError("root", {
@@ -132,11 +140,9 @@ function ResultCard({
         return;
       }
 
-      console.log("documentId", resData.documentId);
-
-      if (resData?.documentId) {
-        setDocumentId(resData.documentId);
-        const url = `https://docs.google.com/document/d/${resData.documentId}/edit`;
+      if (resData?.document_id) {
+        setDocumentId(resData.document_id);
+        const url = `https://docs.google.com/document/d/${resData.document_id}/edit`;
         window.open(url, "_blank");
       } else {
         setError("root", {
