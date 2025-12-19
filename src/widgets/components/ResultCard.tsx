@@ -51,7 +51,7 @@ const requiredPositiveNumberField = z
         message: "Должно быть целым числом",
       });
     }
-    if (val <= 0) {
+    if (val < 0) {
       ctx.addIssue({
         code: "custom",
         message: "Должно быть положительным числом",
@@ -120,10 +120,16 @@ function ResultCard({
     try {
       const payload = {
         ...formData,
+        protocol_number: Number(formData.protocol_number),
+        question_number: Number(formData.question_number),
+        actual_member_number: Number(formData.actual_member_number),
+        expected_member_number: Number(formData.expected_member_number),
+        votes_for: Number(formData.votes_for),
+        votes_against: Number(formData.votes_against),
+        votes_abstained: Number(formData.votes_abstained),
         student_name: data?.ФИО,
       };
 
-      // вызываем локальный серверный route
       const res = await fetch("/api/send-protocol", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -350,7 +356,7 @@ function ResultCard({
                     type="number"
                     placeholder="10"
                     className="border-muted-foreground/20 transition-all focus:ring-2 focus:ring-primary/20"
-                    {...register("question_number", { valueAsNumber: true })}
+                    {...register("question_number")}
                   />
 
                   {errors.question_number && (
@@ -446,9 +452,7 @@ function ResultCard({
                     id="actualMemberNumber"
                     type="number"
                     placeholder="8"
-                    {...register("actual_member_number", {
-                      valueAsNumber: true,
-                    })}
+                    {...register("actual_member_number")}
                     className="bg-[#f8f8f8]"
                   />
 
@@ -460,17 +464,16 @@ function ResultCard({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="expectedMemberNumber">
-                    Ожидаемое количество членов{" "}
-                    <span className="text-red-500">*</span>
+                    Ожидаемое количество членов
                   </Label>
                   <Input
                     id="expectedMemberNumber"
                     type="number"
-                    placeholder="12"
-                    {...register("expected_member_number", {
-                      valueAsNumber: true,
-                    })}
-                    className="bg-[#f8f8f8]"
+                    className="bg-[#f8f8f8] cursor-not-allowed"
+                    defaultValue={16}
+                    readOnly
+                    {...register("expected_member_number")}
+                    tabIndex={-1}
                   />
 
                   {errors.expected_member_number && (
@@ -506,7 +509,7 @@ function ResultCard({
                       min="0"
                       placeholder="8"
                       className="border-muted-foreground/20 bg-background transition-all focus:ring-2 focus:ring-primary/20"
-                      {...register("votes_for", { valueAsNumber: true })}
+                      {...register("votes_for")}
                     />
 
                     {errors.votes_for && (
@@ -534,7 +537,7 @@ function ResultCard({
                       min="0"
                       placeholder="0"
                       className="border-muted-foreground/20 bg-background transition-all focus:ring-2 focus:ring-primary/20"
-                      {...register("votes_against", { valueAsNumber: true })}
+                      {...register("votes_against")}
                     />
 
                     {errors.votes_against && (
@@ -562,7 +565,7 @@ function ResultCard({
                       min="0"
                       placeholder="1"
                       className="border-muted-foreground/20 bg-background transition-all focus:ring-2 focus:ring-primary/20"
-                      {...register("votes_abstained", { valueAsNumber: true })}
+                      {...register("votes_abstained")}
                     />
 
                     {errors.votes_abstained && (
