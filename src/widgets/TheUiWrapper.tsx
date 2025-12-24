@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import ResultCard from "@/widgets/components/ResultCard";
+import { cn } from "@/shared/utils/cn";
 
 interface TheUiWrapperProps {
   typedRows: RequestRow[];
@@ -37,7 +38,7 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
       ? []
       : typedRows
           .filter((req) => req.ФИО === selectedStudent)
-          .map((req) => req.Вопрос);
+          .map((req) => ({ question: req.Вопрос, status: req.Статус }));
 
   const uniqueQuestions = Array.from(new Set(questionsForStudent)).filter(
     Boolean
@@ -108,8 +109,14 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
                   </SelectTrigger>
                   <SelectContent position="popper" align="start">
                     {uniqueQuestions.map((question) => (
-                      <SelectItem key={question} value={question}>
-                        {question}
+                      <SelectItem
+                        key={question?.question}
+                        value={question.question}
+                        className={cn(
+                          "question",
+                          question.status === "sent" && "line-through"
+                        )}>
+                        {question?.question}
                       </SelectItem>
                     ))}
                   </SelectContent>

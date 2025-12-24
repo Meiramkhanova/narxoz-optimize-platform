@@ -1,27 +1,28 @@
-// app/api/send-email/route.ts
+import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
+import https from "https";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const data = await req.json();
+  const webhookUrlEmail = process.env.N8N_WEBHOOK_Email;
 
-  const res = await fetch(
-    "https://n8n.contractpro.kz/webhook/b8c82131-b396-48f4-ad4d-4b222f8883a9",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }
-  );
-
-  const data = await res.json();
-  console.log("Ответ от webhookы:", data);
-
-  if (!res.ok) {
+  if (!webhookUrlEmail) {
     return NextResponse.json(
-      { error: "Ошибка отправки на почту" },
+      { error: "Webbook Url Email is not configured in ENV" },
       { status: 500 }
     );
   }
 
-  return NextResponse.json({ success: true });
+  try {
+    const res = await axios.post(webhookUrlEmail, data, {
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+    });
+
+    revalidatePath("/");
+
+    return NextResponse.json(res.data, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

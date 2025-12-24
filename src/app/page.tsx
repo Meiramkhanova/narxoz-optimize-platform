@@ -19,7 +19,7 @@ export interface RequestRow {
   "Номер Обращения": string;
   Контакты: string;
   Вопрос: string;
-  Статус: "NEW";
+  Статус: "NEW" | "sent";
   Категория: "Отработка" | "Другое";
   Дата: string;
 }

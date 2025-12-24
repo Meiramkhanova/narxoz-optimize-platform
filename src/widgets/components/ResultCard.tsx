@@ -174,10 +174,11 @@ function ResultCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          student_name: data.ФИО,
+          student_name: data?.ФИО,
           student_email: email || "",
-          student_question: data.Вопрос || "",
+          student_question: data?.Вопрос || "",
           document_id: documentId,
+          request_number: data?.["Номер Обращения"] || "",
         }),
       });
 
