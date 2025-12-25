@@ -1,6 +1,5 @@
 import axios from "axios";
 import https from "https";
-import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -19,8 +18,6 @@ export async function POST(req: NextRequest) {
     const res = await axios.post(webhookUrlProtocol, data, {
       httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     });
-
-    revalidatePath("/");
 
     return NextResponse.json(res.data, { status: 200 });
   } catch (err: any) {

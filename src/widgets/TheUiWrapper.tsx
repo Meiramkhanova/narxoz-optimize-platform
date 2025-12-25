@@ -147,11 +147,10 @@ function TheUiWrapper({ typedRows }: TheUiWrapperProps) {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-6 mt-8">
-            {filteredRequests.map((request, index) => (
+            {filteredRequests.map((request) => (
               <ResultCard
-                order={index + 1}
                 data={request}
-                key={index + 1}
+                key={`${request["Номер Обращения"]}-${request["ФИО"]}-${request["Вопрос"]}`}
                 isExpanded={expandedId === request["Номер Обращения"]}
                 onToggle={() => {
                   if (appliedStudent !== "all" && appliedQuestion !== "") {

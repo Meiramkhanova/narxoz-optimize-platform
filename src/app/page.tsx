@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import fs from "fs/promises";
 import { GoogleAuth } from "google-auth-library";
 import { GoogleSpreadsheet } from "google-spreadsheet";

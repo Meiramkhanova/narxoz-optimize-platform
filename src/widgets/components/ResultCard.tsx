@@ -21,10 +21,10 @@ import { Resolver, useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ResultCardProps {
   data: RequestRow;
-  order: number;
   isExpanded: boolean;
   onToggle: () => void;
   canToggle: boolean;
@@ -95,6 +95,8 @@ function ResultCard({
   const [emailStatus, setEmailStatus] = useState<false | "sending" | "sent">(
     false
   );
+
+  const router = useRouter();
 
   const {
     register,
@@ -194,6 +196,8 @@ function ResultCard({
         setEmailStatus("sent");
         reset();
         setDocumentId(null);
+
+        router.refresh();
 
         setTimeout(() => setEmailStatus(false), 1000);
       }
